@@ -30,8 +30,9 @@ var Key = {
 //TODO: Score system, time limits, failure conditions
 var Game = {
     fps : 60,
-    width : 400,
+    width : 600,
     height : 400,
+    score : 0,
     blocks : [],
     colors : [ "Black" , "White" , "Red" , "Aqua" , "Lime" , "Magenta" , "Blue" , "Yellow" ]
 };
@@ -59,12 +60,33 @@ Game.start = function() {
 
 Game.update = function(){
 	Game.player.update();
+    for( i = 0; i < 100; i++){
+        matches = [ Game.checkU( i ) , Game.checkD( i ) , Game.checkL( i ) , Game.checkR( i ) ]
+        ud = matches[ 0 ] + matches[ 1 ];
+        lr = matches[ 2 ] + matches[ 3 ];
+        if( ud > 1 ){
+            Game.score += ud + 1;
+            for( j = i - 10 * matches[ 0 ]; j <= i + 10 * matches[ 1 ]; j+=10 ){
+                Game.blocks[ j ].color = randomColor();
+            }
+        }
+        if( lr > 1 ){
+            Game.score += lr + 1;
+            for( j = i - matches[ 2 ]; j <= i + matches[ 3 ]; j++ ){
+                Game.blocks[ j ].color = randomColor();
+            }
+        }
+    }
 };
 
 Game.render = function () {
-    Game.context.clearRect( 0 , 0 , 400 , 400 );
 	Game.context.fillStyle = "LightGray";
 	Game.context.fillRect(0, 0, Game.width, Game.height);
+    Game.context.font = "30px Arial";
+    Game.context.fillStyle = "Black";
+    Game.context.fillText( "volatile" , 450 , 25 );
+    Game.context.fillText( "Score: " , 450 , 50 );
+    Game.context.fillText( Game.score , 425, 75 );
 	Game.player.render();
 	for( i = 0; i < 100; i++ ){
 		Game.blocks[i].render();
@@ -80,6 +102,42 @@ Game.step = function () {
 	Game.render();
 	animate( Game.step );
 };
+Game.checkL = function( i ){
+    if( i % 10 == 0 ){
+        return 0;
+    }
+    if( Game.blocks[ i ].color == Game.blocks[ i - 1 ].color ){
+        return 1 + Game.checkL( i - 1 );
+    }
+    return 0;
+};
+Game.checkR = function( i ){
+    if( i % 10 == 9 ){
+        return 0;
+    }
+    if( Game.blocks[ i ].color == Game.blocks[ i + 1 ].color ){
+        return 1 + Game.checkR( i + 1 );
+    }
+    return 0;
+};
+Game.checkU = function( i ){
+    if( i < 10 ){
+        return 0;
+    }
+    if( Game.blocks[ i ].color == Game.blocks[ i - 10 ].color ){
+        return 1 + Game.checkU( i - 10 );
+    }
+    return 0;
+};
+Game.checkD = function( i ){
+    if( i > 89 ){
+        return 0;
+    }
+    if( Game.blocks[ i ].color == Game.blocks[ i + 10 ].color ){
+        return 1 + Game.checkD(i + 10 );
+    }
+    return 0;
+}
 
 //Block class
 //TODO: match detection, block generation
@@ -88,10 +146,11 @@ function Block( x , y , color ){
 	this.y = y;
     this.sprites = new Image();
     this.sprites.src = "images/sprites.png";
+    
 	//Colors include
 	//Black,White,Red,Cyan,Green,Magenta,Blue,Yellow
 	this.color = color;
-	this.render=function(){
+	this.render = function(){
         Game.context.drawImage( this.sprites , this.color * 40 , 0 , 40 , 40 , this.x , this.y , 40 , 40 );
     };
 };
